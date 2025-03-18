@@ -1,7 +1,14 @@
 import requests
 import socketio
+import os
+from dotenv import load_dotenv
 
-SERVER_URL = "http://localhost:8080/track"  # Change to your actual server
+# Load environment variables
+load_dotenv()
+
+WEB_SERVER = os.getenv("WEB_SERVER_URL")
+
+SERVER_URL = str(WEB_SERVER + "/track")  # Change to your actual server
 
 
 sio = socketio.Client()

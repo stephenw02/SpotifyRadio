@@ -1,8 +1,15 @@
 import requests
 import time
 from spotify_auth import get_spotify_client
+import os
+from dotenv import load_dotenv
 
-SERVER_URL = "http://localhost:8080/update"  # Change to your actual server
+# Load environment variables
+load_dotenv()
+
+WEB_SERVER = os.getenv("WEB_SERVER_URL")
+
+SERVER_URL = str(WEB_SERVER + "/update")  # Change to your actual server
 
 def get_current_track():
     """Fetch the currently playing track from Spotify."""
