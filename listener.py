@@ -1,7 +1,7 @@
 import requests
 import socketio
 
-SERVER_URL = "http://192.168.0.15:8080/track"  # Change to your actual server
+SERVER_URL = "http://localhost:8080/track"  # Change to your actual server
 
 
 sio = socketio.Client()
