@@ -1,6 +1,6 @@
 import requests
 import time
-from spotify_auth import get_spotify_client
+from get_tokens import spotipy_readiness
 import os
 from dotenv import load_dotenv
 
@@ -11,9 +11,14 @@ WEB_SERVER = os.getenv("WEB_SERVER_URL")
 
 SERVER_URL = str(WEB_SERVER + "/update")  # Change to your actual server
 
+access_token = None
+expires_at = None
+refresh_token = None
+
 def get_current_track():
     """Fetch the currently playing track from Spotify."""
-    sp = get_spotify_client()
+    global access_token, expires_at, refresh_token
+    sp, access_token, expires_at, refresh_token = spotipy_readiness(access_token, refresh_token, expires_at)
     track_info = sp.current_user_playing_track()
 
     if track_info and track_info.get("is_playing"):

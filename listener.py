@@ -21,6 +21,7 @@ def connect():
 def track_update(data):
     """Handle incoming track updates from the broadcaster."""
     print(f"New Track: {data.get('track_name')} by {data.get('artist')}")
+    # Add code to start playback
 
 @sio.event
 def disconnect():
