@@ -1,7 +1,7 @@
 import requests
 import time
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyOAuth, SpotifyPKCE
 import os
 from dotenv import load_dotenv
 
@@ -55,16 +55,15 @@ def refresh_access_token(access_token, refresh_token, expires_at):
         print("❌ No refresh token available!")
         return
 
-    auth_manager = SpotifyOAuth(
+    auth_manager = SpotifyPKCE(
         client_id=SPOTIFY_CLIENT_ID,
-        client_secret=SPOTIFY_CLIENT_SECRET,
         redirect_uri=SPOTIFY_REDIRECT_URI,
         scope="user-read-playback-state user-modify-playback-state user-read-currently-playing"
     )
 
-    new_token_info = auth_manager.refresh_access_token(refresh_token)
-    access_token = new_token_info.get("access_token")
-    expires_at = int(time.time()) + new_token_info.get("expires_in", 3600)
+    token_info = auth_manager.get_cached_token()
+    access_token = token_info["access_token"]
+    expires_at = token_info["expires_at"]
 
     print("🔄 Access token refreshed!")
 

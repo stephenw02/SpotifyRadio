@@ -20,13 +20,14 @@ def get_current_track():
     global access_token, expires_at, refresh_token
     sp, access_token, expires_at, refresh_token = spotipy_readiness(access_token, refresh_token, expires_at)
     track_info = sp.current_user_playing_track()
+    print(sp.devices()["devices"][0]["id"])
 
     if track_info and track_info.get("is_playing"):
         return {
             "track_name": track_info["item"]["name"],
             "artist": track_info["item"]["artists"][0]["name"],
             "album": track_info["item"]["album"]["name"],
-            "track_url": track_info["item"]["external_urls"]["spotify"]
+            "track_uri": track_info["item"]["uri"]
         }
     return None
 
