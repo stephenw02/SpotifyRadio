@@ -11,6 +11,8 @@ WEB_SERVER = os.getenv("WEB_SERVER_URL")
 
 SERVER_URL = str(WEB_SERVER + "/update")  # Change to your actual server
 
+DEVICE_ID = os.getenv("deviceID")
+
 access_token = None
 expires_at = None
 refresh_token = None
@@ -20,9 +22,10 @@ def get_current_track():
     global access_token, expires_at, refresh_token
     sp, access_token, expires_at, refresh_token = spotipy_readiness(access_token, refresh_token, expires_at)
     track_info = sp.current_user_playing_track()
-    print(sp.devices()["devices"][0]["id"])
+    current_playback_device = sp.devices()["devices"][0]["id"]
+    #print(current_playback_device)
 
-    if track_info and track_info.get("is_playing"):
+    if track_info and track_info.get("is_playing") and current_playback_device == DEVICE_ID:
         return {
             "track_name": track_info["item"]["name"],
             "artist": track_info["item"]["artists"][0]["name"],
