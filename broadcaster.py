@@ -2,9 +2,9 @@ import requests
 import time
 from get_tokens import spotipy_readiness
 from supabase_helper import update_track
+from album_cover_colors import get_album_colors
 import os
 from dotenv import load_dotenv
-from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
@@ -27,12 +27,17 @@ def get_current_track():
     current_playback_device = sp.devices()["devices"][0]["id"]
 
     if track_info and track_info.get("is_playing") and current_playback_device == DEVICE_ID:
+        try:
+            colors = get_album_colors(track_info["item"]["album"]["images"][0]["url"], False)
+        except:
+            colors = [192,192,192]
         return {
             "track_uri": track_info["item"]["uri"],
             "album": track_info["item"]["album"]["name"],
             "artist": track_info["item"]["artists"][0]["name"],
             "song": track_info["item"]["name"],
-            "album_cover_url": track_info["item"]["album"]["images"][0]["url"] if track_info["item"]["album"]["images"] else None
+            "album_cover_url": track_info["item"]["album"]["images"][0]["url"] if track_info["item"]["album"]["images"] else None,
+            "color": colors
         }
     return None
 
