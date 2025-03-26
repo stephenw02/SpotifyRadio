@@ -1,15 +1,11 @@
-import requests
+import time
 from get_tokens import spotipy_readiness
-import socketio
+from supabase_helper import get_latest_track  # Import the function to fetch latest track
 import os
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
-
-WEB_SERVER = os.getenv("WEB_SERVER_URL")
-
-SERVER_URL = str(WEB_SERVER + "/track")  # Change to your actual server
 
 DEVICE_ID = os.getenv("deviceID")
 
@@ -17,32 +13,29 @@ access_token = None
 expires_at = None
 refresh_token = None
 
-sio = socketio.Client()
-
 def update_playback(track_uri):
-    """Update currently playing to new track from broadcaster"""
+    """Update currently playing to new track from the latest track in Supabase"""
     global access_token, expires_at, refresh_token
     sp, access_token, expires_at, refresh_token = spotipy_readiness(access_token, refresh_token, expires_at)
-    sp.start_playback(device_id=DEVICE_ID, uris=[track_uri])
 
-@sio.event
-def connect():
-    print("Connected to server.")
+    if sp and track_uri:
+        sp.start_playback(device_id=DEVICE_ID, uris=[track_uri])
+        print(f"▶️ Now playing: {track_uri}")
 
-@sio.event
-def track_update(data):
-    """Handle incoming track updates from the broadcaster."""
-    print(f"New Track: {data.get('track_name')} by {data.get('artist')}")
-    track_uri = data.get('track_uri')
-    print(track_uri)
-    update_playback(track_uri)
+def listen_for_updates():
+    """Continuously check for the latest track and play it if it changes."""
+    last_track_uri = None
 
-@sio.event
-def disconnect():
-    print("Disconnected from server.")
+    while True:
+        latest_track = get_latest_track()
 
-# Connect to the relay server
-sio.connect(SERVER_URL)
+        if latest_track and latest_track.get("track_uri") != last_track_uri:
+            track_uri = latest_track.get("track_uri")
+            print(f"🎶 New Track: {latest_track.get('song')} by {latest_track.get('artist')}")
+            update_playback(track_uri)
+            last_track_uri = track_uri  # Avoid re-playing the same track
 
-# Keep the script running to listen for updates
-sio.wait()
+        time.sleep(1)  # Adjust polling frequency as needed
+
+if __name__ == "__main__":
+    listen_for_updates()

@@ -1,56 +1,60 @@
 import requests
 import time
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth, SpotifyPKCE
+from spotipy.oauth2 import SpotifyPKCE
 import os
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
 
-# Airtable credentials
-AIRTABLE_URL = os.getenv("airtableURL")
-AIRTABLE_API_KEY = os.getenv("airtableToken")
+# Supabase credentials
+SUPABASE_URL = os.getenv("supabaseURL")
+SUPABASE_KEY = os.getenv("supabaseKey")
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Spotify API credentials
 SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID")
-SPOTIFY_CLIENT_SECRET = os.getenv("SPOTIFY_CLIENT_SECRET")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI") # Unused but required for Spotipy
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")  # Unused but required for Spotipy
 
-# Raspberry Pi ID (match this with the one stored in Airtable)
+# Raspberry Pi ID (match this with the one stored in Supabase)
 PI_ID = os.getenv("piID")
 
+
 def spotipy_readiness(access_token, refresh_token, expires_at):
-    if access_token == None or refresh_token == None or expires_at == None:
-        access_token, refresh_token, expires_at = fetch_tokens_from_airtable()
-    access_token, expires_at, refresh_token = ensure_valid_token(access_token, refresh_token, expires_at)
+    if access_token is None or refresh_token is None or expires_at is None:
+        access_token, refresh_token, expires_at = fetch_tokens_from_supabase()
 
-    sp = setup_spotipy(access_token)
-    return sp, access_token, expires_at, refresh_token
-
-def fetch_tokens_from_airtable():
-    """Fetch the access and refresh tokens from Airtable using the Pi ID."""
-    headers = {"Authorization": f"Bearer {AIRTABLE_API_KEY}"}
-    url = f"{AIRTABLE_URL}?filterByFormula={{piID}}='{PI_ID}'"
-
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        records = response.json().get("records", [])
-        if records:
-            record = records[0]["fields"]
-            access_token = record.get("access_token")
-            refresh_token = record.get("refresh_token")
-            expires_at = int(record.get("expires_at", 0))
-            print("✅ Tokens fetched from Airtable.")
-            return access_token, refresh_token, expires_at
-        else:
-            print("⚠️ No record found for this Pi ID in Airtable.")
+    if access_token is not None and refresh_token is not None and expires_at is not None:
+        access_token, expires_at, refresh_token = ensure_valid_token(access_token, refresh_token, expires_at)
+        sp = setup_spotipy(access_token)
+        return sp, access_token, expires_at, refresh_token
+    
     else:
-        print("❌ Error fetching tokens from Airtable:", response.text)
+        return None, None, None, None
+
+
+def fetch_tokens_from_supabase():
+    """Fetch the access and refresh tokens from Supabase using the Pi ID."""
+    response = supabase.table("Tokens").select("*").eq("pi_id", PI_ID).execute()
+
+    if response.data:
+        record = response.data[0]
+        access_token = record.get("access_token")
+        refresh_token = record.get("refresh_token")
+        expires_at = int(record.get("expires_at", 0))
+        print("✅ Tokens fetched from Supabase.")
+        return access_token, refresh_token, expires_at
+    else:
+        print("⚠️ No record found for this Pi ID in Supabase.")
+        return None, None, None
+
 
 def refresh_access_token(access_token, refresh_token, expires_at):
-    """Use the refresh token to get a new access token and update Airtable."""
-
+    """Use the refresh token to get a new access token and update Supabase."""
     if not refresh_token:
         print("❌ No refresh token available!")
         return
@@ -67,44 +71,25 @@ def refresh_access_token(access_token, refresh_token, expires_at):
 
     print("🔄 Access token refreshed!")
 
-    # ✅ Update Airtable with the new access token and expiration time
-    update_airtable_token(access_token, expires_at, refresh_token)
+    # ✅ Update Supabase with the new access token and expiration time
+    update_supabase_token(access_token, expires_at, refresh_token)
 
     return access_token, expires_at, refresh_token
-    
-def update_airtable_token(new_access_token, new_expires_at, refresh_token):
-    """Update the access token and expiration time in Airtable."""
-    headers = {
-        "Authorization": f"Bearer {AIRTABLE_API_KEY}",
-        "Content-Type": "application/json"
-    }
 
-    # Find the correct record to update
-    url = f"{AIRTABLE_URL}?filterByFormula={{piID}}='{PI_ID}'"
-    response = requests.get(url, headers=headers)
-    
-    if response.status_code == 200:
-        records = response.json().get("records", [])
-        if records:
-            record_id = records[0]["id"]
-            update_url = f"{AIRTABLE_URL}/{record_id}"
-            data = {
-                "fields": {
-                    "access_token": new_access_token,
-                    "expires_at": str(new_expires_at)
-                }
-            }
-            update_response = requests.patch(update_url, headers=headers, json=data)
 
-            if update_response.status_code == 200:
-                print("✅ Airtable updated with new access token.")
-                return new_access_token, new_expires_at, refresh_token
-            else:
-                print("❌ Error updating Airtable:", update_response.text)
-        else:
-            print("⚠️ No record found for this Pi ID in Airtable.")
+def update_supabase_token(new_access_token, new_expires_at, refresh_token):
+    """Update the access token and expiration time in Supabase."""
+    response = supabase.table("Tokens").update({
+        "access_token": new_access_token,
+        "expires_at": str(new_expires_at)
+    }).eq("pi_id", PI_ID).execute()
+
+    if response.data:
+        print("✅ Supabase updated with new access token.")
+        return new_access_token, new_expires_at, refresh_token
     else:
-        print("❌ Error fetching record from Airtable:", response.text)
+        print("❌ Error updating Supabase:", response.error)
+
 
 def ensure_valid_token(access_token, refresh_token, expires_at):
     """Ensure that the access token is still valid; refresh if needed."""
@@ -112,9 +97,10 @@ def ensure_valid_token(access_token, refresh_token, expires_at):
         print("⚠️ Access token expired! Refreshing...")
         access_token, expires_at, refresh_token = refresh_access_token(access_token, refresh_token, expires_at)
     else:
-        time_remaining = round((expires_at - time.time())/60,2)
-        #print("✅ Access token still valid! Time remaining: ", time_remaining, " mins")
+        time_remaining = round((expires_at - time.time()) / 60, 2)
+        # print("✅ Access token still valid! Time remaining: ", time_remaining, "mins")
     return access_token, expires_at, refresh_token
+
 
 def setup_spotipy(access_token):
     """Initialize Spotipy with the current access token."""

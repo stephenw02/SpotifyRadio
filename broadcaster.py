@@ -1,15 +1,13 @@
 import requests
 import time
 from get_tokens import spotipy_readiness
+from supabase_helper import update_track
 import os
 from dotenv import load_dotenv
+from supabase import create_client, Client
 
 # Load environment variables
 load_dotenv()
-
-WEB_SERVER = os.getenv("WEB_SERVER_URL")
-
-SERVER_URL = str(WEB_SERVER + "/update")  # Change to your actual server
 
 DEVICE_ID = os.getenv("deviceID")
 
@@ -21,18 +19,23 @@ def get_current_track():
     """Fetch the currently playing track from Spotify."""
     global access_token, expires_at, refresh_token
     sp, access_token, expires_at, refresh_token = spotipy_readiness(access_token, refresh_token, expires_at)
+
+    if not sp:
+        return None
+
     track_info = sp.current_user_playing_track()
     current_playback_device = sp.devices()["devices"][0]["id"]
-    #print(current_playback_device)
 
     if track_info and track_info.get("is_playing") and current_playback_device == DEVICE_ID:
         return {
-            "track_name": track_info["item"]["name"],
-            "artist": track_info["item"]["artists"][0]["name"],
+            "track_uri": track_info["item"]["uri"],
             "album": track_info["item"]["album"]["name"],
-            "track_uri": track_info["item"]["uri"]
+            "artist": track_info["item"]["artists"][0]["name"],
+            "song": track_info["item"]["name"],
+            "album_cover_url": track_info["item"]["album"]["images"][0]["url"] if track_info["item"]["album"]["images"] else None
         }
     return None
+
 
 def broadcast_track():
     """Continuously check for track changes and send updates."""
@@ -42,11 +45,10 @@ def broadcast_track():
         track_data = get_current_track()
         
         if track_data and track_data != last_track:
-            print(f"Broadcasting: {track_data['track_name']} by {track_data['artist']}")
-            requests.post(SERVER_URL, json=track_data)
-            last_track = track_data  # Update last track to avoid duplicate updates
+            update_track(track_data)
+            last_track = track_data  # Avoid duplicate updates
 
-        time.sleep(5)  # Adjust polling frequency as needed
+        time.sleep(1)  # Adjust polling frequency as needed
 
 if __name__ == "__main__":
     broadcast_track()
