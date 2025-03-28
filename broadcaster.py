@@ -1,7 +1,9 @@
 import requests
+from requests import ReadTimeout
 import time
+import spotipy
 from get_tokens import spotipy_readiness
-from supabase_helper import update_track
+from supabase_helper import update_track, assign_role
 from album_cover_colors import get_album_colors
 import os
 from dotenv import load_dotenv
@@ -23,14 +25,33 @@ def get_current_track():
     if not sp:
         return None
 
-    track_info = sp.current_user_playing_track()
-    current_playback_device = sp.devices()["devices"][0]["id"]
+    try:
+        track_info = sp.current_user_playing_track()
+
+        # Initialize the current_playback_device variable
+        current_playback_device = None
+        try:
+            devices = sp.devices().get("devices", [])
+            if devices:
+                current_playback_device = devices[0]["id"]
+        except Exception as e:
+            print(f"Error retrieving devices: {e}")
+
+    except ReadTimeout:
+        print("Read Timeout Error Occurred. Retrying in 5 seconds...")
+        time.sleep(5)
+        return get_current_track()
+    except Exception as e:
+        print(f"Error getting data: {e}. Retrying in 5 seconds...")
+        time.sleep(5)
+        return get_current_track()
 
     if track_info and track_info.get("is_playing") and current_playback_device == DEVICE_ID:
         try:
             colors = get_album_colors(track_info["item"]["album"]["images"][0]["url"], False)
-        except:
-            colors = [192,192,192]
+        except Exception as e:
+            print(f"Error getting album colors: {e}")
+            colors = [192, 192, 192]
         return {
             "track_uri": track_info["item"]["uri"],
             "album": track_info["item"]["album"]["name"],
@@ -45,6 +66,7 @@ def get_current_track():
 def broadcast_track():
     """Continuously check for track changes and send updates."""
     last_track = None
+    assign_role("Broadcaster")
 
     while True:
         track_data = get_current_track()
@@ -53,7 +75,7 @@ def broadcast_track():
             update_track(track_data)
             last_track = track_data  # Avoid duplicate updates
 
-        time.sleep(1)  # Adjust polling frequency as needed
+        time.sleep(2)  # Adjust polling frequency as needed
 
 if __name__ == "__main__":
     broadcast_track()

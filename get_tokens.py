@@ -93,7 +93,7 @@ def update_supabase_token(new_access_token, new_expires_at, refresh_token):
 
 def ensure_valid_token(access_token, refresh_token, expires_at):
     """Ensure that the access token is still valid; refresh if needed."""
-    if time.time() > int(expires_at):
+    if time.time() > int(expires_at)-100:
         print("⚠️ Access token expired! Refreshing...")
         access_token, expires_at, refresh_token = refresh_access_token(access_token, refresh_token, expires_at)
     else:

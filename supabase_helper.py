@@ -35,3 +35,19 @@ def get_latest_track():
     else:
         print("⚠️ No track data found in Supabase.")
         return {"error": "No track data found"}
+    
+def assign_role(role):
+    """Updates Users table with user's active role (broadcaster/listener)"""
+    response = supabase.table("Users").update({"active_role":role}).eq("pi_id", os.getenv("piID")).execute()
+    if response.data:
+        print(f"✅ Updated user role as: {role}")
+    else:
+        print("❌ Failed to update role:", response)
+
+def remove_role():
+    """Updates Users table with no active role"""
+    response = supabase.table("Users").update({"active_role":""}).eq("pi_id", os.getenv("piID")).execute()
+    if response.data:
+        print(f"✅ Removed user role")
+    else:
+        print("❌ Failed to remove role:", response)
