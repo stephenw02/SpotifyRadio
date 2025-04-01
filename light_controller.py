@@ -24,3 +24,8 @@ def light_white():
     GPIO.output(redPIN, GPIO.HIGH)
     GPIO.output(greenPIN, GPIO.HIGH)
     GPIO.output(bluePIN, GPIO.HIGH)
+
+def light_off():
+    GPIO.output(redPIN, GPIO.LOW)
+    GPIO.output(greenPIN, GPIO.LOW)
+    GPIO.output(bluePIN, GPIO.LOW)

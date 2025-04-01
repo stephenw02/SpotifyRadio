@@ -3,10 +3,12 @@ from requests import ReadTimeout
 import time
 import spotipy
 from get_tokens import spotipy_readiness
-from supabase_helper import update_track, assign_role
+from supabase_helper import update_track, assign_role, get_listeners
 from album_cover_colors import get_album_colors
 import os
 from dotenv import load_dotenv
+from switch_position import read_switch
+from light_controller import light_red, light_off
 
 # Load environment variables
 load_dotenv()
@@ -67,15 +69,40 @@ def broadcast_track():
     """Continuously check for track changes and send updates."""
     last_track = None
     assign_role("Broadcaster")
+    prev_light = None
 
-    while True:
-        track_data = get_current_track()
-        
-        if track_data and track_data != last_track:
-            update_track(track_data)
-            last_track = track_data  # Avoid duplicate updates
+    try:
+        # For pi
+        while read_switch() == "Broadcasting":
+            if get_listeners() > 0 and prev_light != "red": 
+                light_red()
+                prev_light = "red"
+            else: 
+                if prev_light == None or prev_light == "off":
+                    light_red()
+                    prev_light = "red"
+                else:
+                    light_off()
+                    prev_light = "off"
 
-        time.sleep(2)  # Adjust polling frequency as needed
+            track_data = get_current_track()
+            
+            if track_data and track_data != last_track:
+                update_track(track_data)
+                last_track = track_data  # Avoid duplicate updates
+
+            time.sleep(2)  # Adjust polling frequency as needed
+    except:
+        # For local
+        while True:
+            track_data = get_current_track()
+            
+            if track_data and track_data != last_track:
+                update_track(track_data)
+                last_track = track_data  # Avoid duplicate updates
+
+            time.sleep(2)  # Adjust polling frequency as needed
+
 
 if __name__ == "__main__":
     broadcast_track()

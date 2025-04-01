@@ -8,7 +8,7 @@ from supabase_helper import get_latest_track
 from collections import Counter
 
 def get_album_colors(url, viz):
-    kmeans = MiniBatchKMeans(n_clusters=8, random_state=0, batch_size=500, max_iter=1000)
+    kmeans = MiniBatchKMeans(n_clusters=5, random_state=0, batch_size=500, max_iter=1000)
 
     image = Image.open(requests.get(url, stream=True).raw)
     image_array = np.array(image)

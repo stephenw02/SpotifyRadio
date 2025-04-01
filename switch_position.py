@@ -14,19 +14,19 @@ def read_switch():
     state2 = GPIO.input(PIN2)
     
     if state1 == GPIO.LOW:
-        light_red()
-        return "Position 1 - ON"
+        #light_red()
+        return "Broadcasting"
     elif state2 == GPIO.LOW:
-        light_blue()
-        return "Position 2 - ON"
+        #light_blue()
+        return "Listening"
     else:
-        light_white()
-        return "OFF"
+        #light_white()
+        return "Off"
     
-try:
-    while True:
-        print("Switch State: ", read_switch())
-        time.sleep(1)
-except KeyboardInterrupt:
-    GPIO.cleanup()
-    print('GPIO pins cleaned up')
+#try:
+#    while True:
+#        print("Switch State: ", read_switch())
+#        time.sleep(1)
+#except KeyboardInterrupt:
+#    GPIO.cleanup()
+#    print('GPIO pins cleaned up')

@@ -51,3 +51,33 @@ def remove_role():
         print(f"✅ Removed user role")
     else:
         print("❌ Failed to remove role:", response)
+
+def get_broadcasters():
+    """Gets count of Broadcasting Users from Supabase"""
+    try:
+        response = supabase.table("Users").select("id", count="exact").eq("active_role", "Broadcaster").execute()
+        if response.status_code == 200:
+            count = response.count
+            #print(f"Number of broadcasters: {count}")
+            return count
+        else:
+            print(f"Error fetching broadcasters: {response.status_code} - {response.error_message}")
+            return 0
+    except Exception as e:
+        print(f"❌ Exception occurred while fetching broadcasters: {e}")
+        return 0
+
+def get_listeners():
+    """Gets count of Listening Users from Supabase"""
+    try:
+        response = supabase.table("Users").select("id", count="exact").eq("active_role", "Listener").execute()
+        if response.status_code == 200:
+            count = response.count
+            #print(f"Number of Listener: {count}")
+            return count
+        else:
+            print(f"Error fetching listeners: {response.status_code} - {response.error_message}")
+            return 0
+    except Exception as e:
+        print(f"❌ Exception occurred while fetching listeners: {e}")
+        return 0
