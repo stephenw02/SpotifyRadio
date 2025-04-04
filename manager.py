@@ -6,6 +6,8 @@ from light_controller import light_red, light_blue, light_white, light_off
 from pi_setup import handle_config
 import time
 
+print("Booting up Spotify Radio...")
+
 prev_light = None
 
 is_configured = handle_config()
@@ -36,6 +38,7 @@ while is_configured==True:
 
     elif pi_input == "Off" and broadcast_count == 0:
         light_off()
+        time.sleep(2)
 
     elif pi_input == "Off" and broadcast_count > 0:
         if prev_light == None or prev_light == "off":
@@ -44,4 +47,5 @@ while is_configured==True:
         else:
             light_off()
             prev_light = "off"
+        time.sleep(2)
 
