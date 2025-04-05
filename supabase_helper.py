@@ -55,29 +55,25 @@ def remove_role():
 def get_broadcasters():
     """Gets count of Broadcasting Users from Supabase"""
     try:
-        response = supabase.table("Users").select("id", count="exact").eq("active_role", "Broadcaster").execute()
-        if response.status_code == 200:
-            count = response.count
-            #print(f"Number of broadcasters: {count}")
-            return count
-        else:
-            print(f"Error fetching broadcasters: {response.status_code} - {response.error_message}")
+        response = supabase.table("Users").select("pi_id", count="exact").eq("active_role", "Broadcaster").execute()
+        if response.data is None:
+            print(f"Error fetching broadcast count: {response}")
             return 0
+        count = response.count
+        return count
     except Exception as e:
-        print(f"❌ Exception occurred while fetching broadcasters: {e}")
+        print(f"Exception occured while fetching broadcast count: {e}")
         return 0
 
 def get_listeners():
     """Gets count of Listening Users from Supabase"""
     try:
-        response = supabase.table("Users").select("id", count="exact").eq("active_role", "Listener").execute()
-        if response.status_code == 200:
-            count = response.count
-            #print(f"Number of Listener: {count}")
-            return count
-        else:
-            print(f"Error fetching listeners: {response.status_code} - {response.error_message}")
+        response = supabase.table("Users").select("pi_id", count="exact").eq("active_role", "Listener").execute()
+        if response.data is None:
+            print(f"Error fetching listen count: {response}")
             return 0
+        count = response.count
+        return count
     except Exception as e:
-        print(f"❌ Exception occurred while fetching listeners: {e}")
+        print(f"Exception occured while fetching listen count: {e}")
         return 0

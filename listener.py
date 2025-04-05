@@ -1,6 +1,6 @@
 import time
 from get_tokens import spotipy_readiness
-from supabase_helper import get_latest_track, assign_role, get_broadcasters
+from supabase_helper import get_latest_track, assign_role, get_broadcasters, remove_role
 import os
 from dotenv import load_dotenv
 from switch_position import read_switch
@@ -75,6 +75,8 @@ def listen_for_updates():
             except Exception as e:
                 print(f"Error while listening for updates: {e}")
                 time.sleep(5)
+        # When no longer broadcasting, remove role
+        remove_role()
             
     except:
         # For local

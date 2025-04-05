@@ -65,16 +65,18 @@ def refresh_access_token(access_token, refresh_token, expires_at):
         scope="user-read-playback-state user-modify-playback-state user-read-currently-playing"
     )
 
-    token_info = auth_manager.get_cached_token()
-    access_token = token_info["access_token"]
-    expires_at = token_info["expires_at"]
-
-    print("🔄 Access token refreshed!")
-
-    # ✅ Update Supabase with the new access token and expiration time
-    update_supabase_token(access_token, expires_at, refresh_token)
-
-    return access_token, expires_at, refresh_token
+    try:
+        token_info = auth_manager.refresh_access_token(refresh_token)
+        access_token = token_info["access_token"]
+        expires_at = token_info["expires_at"]
+        refresh_token = token_info["refresh_token"]
+        print("🔄 Access token refreshed!")
+        # ✅ Update Supabase with the new access token and expiration time
+        update_supabase_token(access_token, expires_at, refresh_token)
+        return access_token, expires_at, refresh_token
+    except Exception as e:
+        print(f"Error refreshing token... {e}")
+        return None, None, None
 
 
 def update_supabase_token(new_access_token, new_expires_at, refresh_token):
@@ -93,7 +95,7 @@ def update_supabase_token(new_access_token, new_expires_at, refresh_token):
 
 def ensure_valid_token(access_token, refresh_token, expires_at):
     """Ensure that the access token is still valid; refresh if needed."""
-    if time.time() > int(expires_at)-100:
+    if time.time() > int(expires_at)-10:
         print("⚠️ Access token expired! Refreshing...")
         access_token, expires_at, refresh_token = refresh_access_token(access_token, refresh_token, expires_at)
     else:

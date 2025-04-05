@@ -3,7 +3,7 @@ from requests import ReadTimeout
 import time
 import spotipy
 from get_tokens import spotipy_readiness
-from supabase_helper import update_track, assign_role, get_listeners
+from supabase_helper import update_track, assign_role, get_listeners, remove_role
 from album_cover_colors import get_album_colors
 import os
 from dotenv import load_dotenv
@@ -92,6 +92,9 @@ def broadcast_track():
                 last_track = track_data  # Avoid duplicate updates
 
             time.sleep(2)  # Adjust polling frequency as needed
+        # When no longer broadcasting, remove role
+        remove_role()
+
     except:
         # For local
         while True:

@@ -61,7 +61,7 @@ def get_album_colors(url, viz):
 
     # If all colors are dark or grey, use the most common color
     if ideal_color is None:
-        ideal_color = sorted_colors_list[0].tolist()
+        ideal_color = [192, 192, 192]
 
     return ideal_color
 
