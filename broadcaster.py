@@ -34,8 +34,13 @@ def get_current_track():
         current_playback_device = None
         try:
             devices = sp.devices().get("devices", [])
-            if devices:
-                current_playback_device = devices[0]["id"]
+            #print(devices)
+            for device in devices:
+                if device.get("is_active"):
+                    current_playback_device = device["id"]
+                    break
+            if current_playback_device is None:
+                print("No active Spotify device found")
         except Exception as e:
             print(f"Error retrieving devices: {e}")
 

@@ -83,6 +83,7 @@ def update_supabase_token(new_access_token, new_expires_at, refresh_token):
     """Update the access token and expiration time in Supabase."""
     response = supabase.table("Tokens").update({
         "access_token": new_access_token,
+        "refresh_token": refresh_token,
         "expires_at": str(new_expires_at)
     }).eq("pi_id", PI_ID).execute()
 

@@ -29,7 +29,7 @@ def apply_wifi_settings(ssid, password):
         print("📶 WiFi config updated. Rebooting to apply settings...")
         os.system("sudo reboot")
 
-def configure_raspotify(username, password):
+def configure_raspotify():
     config_path = "/etc/raspotify/conf"
     if not os.path.exists(config_path):
         print("❌ Raspotify config not found. Is it installed?")
@@ -41,20 +41,14 @@ def configure_raspotify(username, password):
     # Modify or insert USERNAME and PASSWORD
     new_lines = []
     for line in lines:
-        if line.startswith("#DEVICE_NAME="):
-            new_lines.append('DEVICE_NAME="Spotify Radio"\n')
-        elif line.startswith("#USERNAME=") or line.startswith("USERNAME="):
-            new_lines.append(f'USERNAME="{username}"\n')
-        elif line.startswith("#PASSWORD=") or line.startswith("PASSWORD="):
-            new_lines.append(f'PASSWORD="{password}"\n')
+        if line.startswith("#LIBRESPOT_NAME=") or line.startswith("LIBRESPOT_NAME="):
+            new_lines.append('LIBRESPOT_NAME="Spotify Radio"\n')
+        elif line.startswith("#LIBRESPOT_USERNAME=") or line.startswith("LIBRESPOT_USERNAME="):
+            new_lines.append(f'#LIBRESPOT_USERNAME=""\n')
+        elif line.startswith("#LIBRESPOT_PASSWORD=") or line.startswith("LIBRESPOT_PASSWORD="):
+            new_lines.append(f'#LIBRESPOT_PASSWORD=""\n')
         else:
             new_lines.append(line)
-
-    # Add username/password if not found
-    if not any("USERNAME=" in l for l in new_lines):
-        new_lines.append(f'USERNAME="{username}"\n')
-    if not any("PASSWORD=" in l for l in new_lines):
-        new_lines.append(f'PASSWORD="{password}"\n')
 
     with open(config_path, "w") as f:
         f.writelines(new_lines)
@@ -75,8 +69,7 @@ def handle_config():
     if "wifi_ssid" in data and "wifi_password" in data:
         wifi_set = apply_wifi_settings(data["wifi_ssid"], data["wifi_password"])
 
-    if "spotify_username" in data and "spotify_password" in data:
-        raspotify_set = configure_raspotify(data["spotify_username"], data["spotify_password"])
+    raspotify_set = configure_raspotify()
 
     if raspotify_set==True and wifi_set==True:
         return True
